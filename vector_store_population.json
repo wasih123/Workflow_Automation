@@ -1,0 +1,265 @@
+{
+  "name": "vector_store_population",
+  "nodes": [
+    {
+      "parameters": {
+        "chunkOverlap": 250,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        352,
+        240
+      ],
+      "id": "67e603b4-86f0-4a37-9cc1-ac077c8c83e4",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        112
+      ],
+      "id": "b7605294-8e06-440e-bf67-27ac37e3b109",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "duRDlNUzIIl7o4rS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file-name",
+                "value": "={{ $json.name }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        96
+      ],
+      "id": "0d5128a4-acdf-407c-a94a-df5135b4138f",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1CYwyRRveiN3lxG4yGz-5Xg6v0p8uzHC5",
+            "mode": "list",
+            "cachedResultName": "workflow_automation",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1CYwyRRveiN3lxG4yGz-5Xg6v0p8uzHC5"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -96,
+        -80
+      ],
+      "id": "a13a9a58-adfc-4c76-aba1-6448de52b485",
+      "name": "Search files and folders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "OtzHOmrOf4Vjh9Ep",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        48,
+        -80
+      ],
+      "id": "c7090f32-aad5-4d13-809e-fb6802c93050",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "OtzHOmrOf4Vjh9Ep",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "workflow-index-3",
+          "mode": "list",
+          "cachedResultName": "workflow-index-3"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        -80
+      ],
+      "id": "cddef628-19a5-48f6-8ae3-b178ba3abf89",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "T6G0e1C9UOZQQsYk",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "82b150ca-84de-4e88-84a5-991102c09411",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -304,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## One time operation:\n- search for all the files uploaded (SOPs) to Google Drive for storing the embeddings in the vector DB (pinecone vector store): If no files, throw an error and ask user to restart the workflow after uploading all the SOPs\n",
+        "height": 208,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -448,
+        80
+      ],
+      "typeVersion": 1,
+      "id": "74965de0-121b-43ba-9d75-a24a9f5bc2a4",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Populating the Vector DB:\n- from the SOP pdfs, first download them one by one\n- then, use an embeddings model (such as Gemini) and split all the PDFs into chunk sized embedding vectors\n- then store them onto an indexed vector DB",
+        "width": 400
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -64,
+        -256
+      ],
+      "typeVersion": 1,
+      "id": "4e6a6bb9-1737-4c9f-a919-61af3e764aeb",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "37f6d3a6-c68e-435b-842e-c5847fe413e2",
+  "meta": {
+    "instanceId": "99aa77c8b02d8a535ffc9ae768aee0c991b97f8ece9f1f71d6310a5dc13b40b4"
+  },
+  "id": "lCK33z6shCMzuHFT",
+  "tags": []
+}

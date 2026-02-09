@@ -1,0 +1,794 @@
+{
+  "name": "Main_Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -32
+      ],
+      "id": "6fe64dd8-ba4c-4393-a26a-9cbc0d8405ae",
+      "name": "WhatsApp Trigger",
+      "webhookId": "74cb036b-83c0-408d-8a33-84faf860cbaa",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "POSCtnbEe4baNk4G",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "6fx5ggvwgqqj3JRM",
+          "mode": "list",
+          "cachedResultName": "n8n_test"
+        },
+        "content": "={{ $json.task_structure.summary }}",
+        "options": {
+          "dueLang": "={{ $json.task_structure.due_date }}",
+          "priority": "={{ \n  ({ \"normal\": 2, \"medium\": 3, \"high\": 4 })[$json.task_structure.priority] ?? 1 \n}}"
+        }
+      },
+      "type": "n8n-nodes-base.todoist",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        64
+      ],
+      "id": "281491eb-6096-45db-a707-c9b25b1d7a20",
+      "name": "Create a task",
+      "credentials": {
+        "todoistApi": {
+          "id": "rToorUMH6BvWX1lv",
+          "name": "Todoist account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Authentication\nFor this test workflow here are the authentication methods used:\n1. Whatsapp: business cloud account with a free test number: +1 (555) 181-0403\n2. Google Drive and Gemini: Set up OAuth 2 on console.cloud.google.com and then publish the app (for the api interested in). Afterwards copy over the client secret key\n3. Pinecone Vector DB: create an account, then an index store (with dimensionality matching that of the embedding model used), and copy over the API key in the corresponding n8n node",
+        "height": 320,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -768,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "efb5c7a2-624c-4050-901f-c030f1894916",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "lCK33z6shCMzuHFT",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/lCK33z6shCMzuHFT",
+          "cachedResultName": "vector_store_population"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "7f2aa46c-4919-4a33-ae90-e24be36a7615",
+      "name": "Call 'vector_store_population'"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        16
+      ],
+      "id": "236b00f9-a07f-409e-83bf-4b431edb9202",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1CYwyRRveiN3lxG4yGz-5Xg6v0p8uzHC5",
+            "mode": "list",
+            "cachedResultName": "workflow_automation",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1CYwyRRveiN3lxG4yGz-5Xg6v0p8uzHC5"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -544,
+        16
+      ],
+      "id": "96616a1c-64ac-48d6-9218-dcac52b4556f",
+      "name": "Search files and folders",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "OtzHOmrOf4Vjh9Ep",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Multiple triggers from different source (email, whatsapp, todoist, etc.) can be unified by first creating standard (edit fields) node with source and feedback. Then one merge node where the same information is copied over from the distinct paths",
+        "height": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        80,
+        128
+      ],
+      "typeVersion": 1,
+      "id": "572a37f3-9887-446a-adbb-570ac1044994",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an internal operations assistant.\n\nYour job is to interpret unstructured human input in \n{{ $json.messages[0].text.body }} and normalize it into a structured task intake format.\n\nIMPORTANT RULES:\n- Do NOT guess missing information.\n- If information is unclear, leave the value as null.\n- You are NOT allowed to make decisions, approvals, or escalations.\n- You only interpret and suggest.\n- All outputs MUST strictly follow the provided JSON schema.\n- If the input is a question rather than a task, classify it as task_type = \"query\".\n- If multiple tasks are present, extract ONLY the primary task.\n- Be conservative. Accuracy is more important than completeness.\n- In summary, summarize the user input. Put your answer only in the \"ai_notes\" field",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        512,
+        16
+      ],
+      "id": "fb3f68e9-d8e0-46a8-9572-8bbf0fce8431",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        304,
+        352
+      ],
+      "id": "7342941d-d668-439b-9e38-2df98a07750a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "duRDlNUzIIl7o4rS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "a finance company's expense policies and other logistic details"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        240
+      ],
+      "id": "85e62474-7bd5-4d3c-949e-0842cedf5bd2",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "workflow-index-2",
+          "mode": "list",
+          "cachedResultName": "workflow-index-2"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        400
+      ],
+      "id": "1f736389-8d49-477e-9d36-55a167aa4b13",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "T6G0e1C9UOZQQsYk",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        608,
+        528
+      ],
+      "id": "edcad8b0-4ecc-40b2-8e7a-1b7a87c856cc",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "duRDlNUzIIl7o4rS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        816,
+        400
+      ],
+      "id": "0d623969-1507-45e1-a4db-15bc4c14b388",
+      "name": "Google Gemini Chat Model1",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "duRDlNUzIIl7o4rS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## RAG-based AI assistant \n- For the embeddings, gemini (embedding-001) model is used which offers highly accurate vector representations\n- The agent is currently configured to have no memory for testing purposes but this can be added too, to maintain chat history\n- To implement RAG based QA, the query embedding is first compared to all the SOP embeddings from the vector DB (using cosine similarity search). The top 10 matching vectors are then provided as context to the AI model\n- By including the context and the query in the prompt, the model outputs an answer. For the AI model, gemini 2.5 flash has been used since it is accurate and efficient. For contextualizing the vector embeddings, i.e., generating the prompt to the main AI model, gemini 2.5 flash lite has been used, as it is lightweight\n- To output a structured response, a structured output parser has been used which outputs a structure JSON task object, with fields like \"task_type\", \"priority\", \"ai_notes\", etc. This is achieved through a carefully written prompt for the main AI model",
+        "height": 320,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        672
+      ],
+      "typeVersion": 1,
+      "id": "1643f2c8-fced-4ba0-8f37-1b5c9063a2ca",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"task_type\": \"travel | expense | admin | approval | query | other | null\",\n  \"summary\": \"string or null\",\n  \"priority\": \"low | medium | high | null\",\n  \"due_date\": \"YYYY-MM-DD or null\",\n  \"is_question\": true,\n  \"needs_human_review\": true,\n  \"ai_notes\": \"string\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        208
+      ],
+      "id": "8e0af0b4-a31c-4d07-88f5-7d5a7b407c76",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        928,
+        -32
+      ],
+      "id": "0b59db21-454e-42d7-a4b5-624f621bab7a",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"task_structure\": {{ $json.output }},\n  \"task_source\": {{ $json.messaging_product }},\n  \"task_source_name\": {{ $json.contacts[0].profile.name }},\n  \"task_source_contact\": {{ $json.contacts[0].wa_id }}\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        -32
+      ],
+      "id": "095b55e0-db2d-40cd-a3c5-295fcabadc84",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Standardizing the task (Structure) \n- Task has these fields for proper logging:\n  \"task_structure\": <output structure imposed by the AI model>,\n  \"task_source\": <chat source>,\n  \"task_source_name\": <contact name of person that sent chat>,\n  \"task_source_contact\": <contact number of person that sent chat>\n",
+        "height": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        992,
+        128
+      ],
+      "typeVersion": 1,
+      "id": "973598e2-da45-42c6-af0d-e4db7f6a6fca",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Create an automated task with priority, due date, summary information. Then add a comment with tips enriched from the AI assistant",
+        "height": 144,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1376,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "faadd58d-4dc4-490d-b49c-01780c345d3c",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "resource": "comment",
+        "commentTaskId": "={{ $json.task_id }}",
+        "commentContent": "=AI notes:  {{ $json.ai_notes }}"
+      },
+      "type": "n8n-nodes-base.todoist",
+      "typeVersion": 2.2,
+      "position": [
+        2096,
+        -16
+      ],
+      "id": "5a3dd224-9139-4860-aece-2cd0efe0c82f",
+      "name": "Create a comment",
+      "credentials": {
+        "todoistApi": {
+          "id": "rToorUMH6BvWX1lv",
+          "name": "Todoist account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1648,
+        -16
+      ],
+      "id": "08396078-83e2-4841-9250-1dcf8aea9280",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"ai_notes\": {{ $json.task_structure.ai_notes }},\n  \"task_id\": {{ $json.id }}\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        -16
+      ],
+      "id": "b7bbf7bb-9d11-4297-8f62-e5dd9f7de15c",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "content": "## Workflow routing \nIf there are some files on Google Drive, then we can directly use the AI assistant (if embeddings have been generated), otherwise we throw an error and ask the user to first upload files. The error workflow will then be activated which will log the error",
+        "height": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -432,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "aa5823e1-2afa-4d24-a0e8-c2c3f9098076",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "34c3f9c4-c060-4852-8d8e-e9eb47f9ed04",
+              "leftValue": "={{ $input.all().length}}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -368,
+        16
+      ],
+      "id": "d78a57c4-cd95-4d9c-9127-d50210eaf292",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "11N5n1QnxcUoEWL7mxImy9HiUg7W6s0Uw04MLW_-dkeA",
+          "mode": "list",
+          "cachedResultName": "Error_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11N5n1QnxcUoEWL7mxImy9HiUg7W6s0Uw04MLW_-dkeA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11N5n1QnxcUoEWL7mxImy9HiUg7W6s0Uw04MLW_-dkeA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Workflow": "=Main_Worfklow",
+            "URL": "=https://automation0208.app.n8n.cloud/workflow/deZZ-zUqDXgR-JesE4Bkv/executions/67",
+            "Error Node": "=Data Filtering (IF node)",
+            "Error Message": "=Please upload SOPs on Drive!"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error Node",
+              "displayName": "Error Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error Message",
+              "displayName": "Error Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -128,
+        240
+      ],
+      "id": "c86f3c92-4cd1-42f0-aea3-dba02538d912",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xjJXMM3ps7XJkvQS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "Please upload SOPs on Drive!"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        16,
+        352
+      ],
+      "id": "00b5442f-8ce2-4b8c-9185-ed88e3eafca3",
+      "name": "Stop and Error"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a task": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create a task",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Create a comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Call 'vector_store_population'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "c5et8SjPNVn_Zq3TAr6Br",
+    "executionTimeout": -1
+  },
+  "versionId": "73a38840-8e33-47de-be50-c2e8cd515699",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "99aa77c8b02d8a535ffc9ae768aee0c991b97f8ece9f1f71d6310a5dc13b40b4"
+  },
+  "id": "deZZ-zUqDXgR-JesE4Bkv",
+  "tags": []
+}
