@@ -1,0 +1,10 @@
+Please find here the two workflows that I created on the trial day (Main_Workflow and vector_store_population)
+- These workflows show the main functionality asked in the MVP:
+- A user enters a query on Whatsapp. I used my Whatsapp business account with a test number: +1 (555) 181-0403
+- It then passes through a structured response RAG-based AI summarizer. This summarizer is connected to a vector DB (hosted on Pinecone's server), a Gemini Chat and embeddings model and a suitably designed prompt
+- The prompt ensures that the AI's output is always a well structured JSON object
+- Afterwards, a new Todoist task is created through the webhook integration of the "Create Task" API end-point in n8n. A new comment (AI_notes) is also added under the task. The AI outputs a priority value ("null" / "low" / "medium" / "high" ) and accordingly a number in between 1 and 4 is assigned for the Todoist task
+- Many SOPs can be uploaded and supported.
+- For any further questions or queries, please contact: wasih.mohd@gmail.com
+                                                                                                                    
+                                                                                    
