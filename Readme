@@ -1,4 +1,4 @@
-Please find here the two workflows that I created on the trial day (Main_Workflow and vector_store_population)
+## Please find here the two workflows that I created on the trial day (Main_Workflow and vector_store_population)
 - These workflows show the main functionality asked in the MVP:
 - A user enters a query on Whatsapp. I used my Whatsapp business account with a test number: +1 (555) 181-0403
 - It then passes through a structured response RAG-based AI summarizer. This summarizer is connected to a vector DB (hosted on Pinecone's server), a Gemini Chat and embeddings model and a suitably designed prompt
